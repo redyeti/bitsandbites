@@ -1,0 +1,79 @@
+% 
+% Recipes:
+%  - algorithms
+%  - usually: humans->computers here: computers->humans!
+%  - similar to programming languages
+% 
+% Novelty:
+%  - combine new ingrediences to new things
+% Usefulness:
+%  - make sure ingrediences fit together
+%  - make sure processes fit together
+%  -> ... "type inference"
+% 
+% Stage 0: Database Layer
+% 	Mongodb [mongodb]
+% 	 - Robomongo db gui
+% 	 - mongoengine [python-mongoengine]
+% 
+% Stage 1: Document Retrieval
+% 	Fetch recipe index
+% 	Fetch recipes
+% 	 - e.g. from wikibooks
+% 
+% Stage 2: Language Processing
+% 	Information retrieval
+% 	 - process document parts:
+% 		- name
+% 		- ingredience list
+% 		- recipe text
+% 		- categories
+% 	 - dictionary based and
+% 	 - NLTK [python-nltk]
+% 		- POS tagging
+% 		- chunking
+% 
+% 	CHALLENGES:
+% 	- get rid of noise
+% 
+% Stage 3: Semantic Model
+% 	- identify techniques, ingrediences and tools (by category)
+% 	- model sentence parts as procedural operations
+% 	  - has to be done by hand for most operations
+% 	  - maybe use "techniques" category: most techniques are unary + inline
+% 	- also find a way to model the results of the operation
+% 	  - idea so far: use sets like {{potatoes, chopped}, {spinach, washed}}
+% 	  - trees would be more powerful but also more difficult to handle by the following steps
+% 
+% 	CHALLENGES:
+% 	- understand as many documents as possible with as little
+% 	  manual work as possible
+% 
+% Stage 4: Analysis
+% 	- use data mining algorithms to find common rules (e.g. a priori algorithm)
+% 	- find typical processes
+% 	- find similar ingrediences, tools or actions
+% 	  - direct comparison "on demand"
+% 	  - or clustering and extended rules replacing ingrediences by their clusters
+% 
+% 	use (maybe): [numpy], [sciklearn]
+% 
+% 	CHALLENGES:
+% 	- get the parameters right (e.g. support and confidence levels)
+% 
+% Stage 5: Be creative
+% 	- Start with a set of ingrediences
+% 	- combine ingrediences according to the rules
+% 	- consider switching out similar ingrediences
+% 	- terminate when a valid end state is found
+% 	- strip the recipe of unneeded steps, tools and ingrediences
+% 
+% 	CHALLENGES:
+% 	- hope that the model will work
+% 	- get the probabilities right for
+% 	  - exchanging ingrediences
+% 	  - rule probability curve
+% 
+% Bonus:
+% 	- Estimate difficulty and preparation time
+% 	- Determine fitting categories

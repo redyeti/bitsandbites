@@ -1,0 +1,103 @@
+\documentclass[a4paper,10pt]{scrartcl}
+\usepackage[utf8]{inputenc}
+\usepackage{url}
+
+%opening
+\title{Bits and Bites}
+\subtitle{A Cooking Recipe Creating System}
+\author{Joshua Hopp}
+\subject{Computational Creativity Project Outline}
+
+\begin{document}
+
+\maketitle
+
+\section{Why recipes?}
+% ultra-short description of the system
+% interesting properties of recipes:
+%  - algorithm / software analogy
+Basically, a cooking recipe is nothing more than an algorithm
+or a computer program. There are some basic types of variables describing the input data (called ingrediences)
+which are usually declared at the beginning of the recipe and some constants referring to external
+ressources (called kitchen tools). The body of the recipe consists of steps. Each step contains one
+or more functions (cooking techniques) which are then applied to the input or intermediate products.
+
+Traditional software is written by creative people and interpreted and executed by computers. This projects
+allows computers and humans to switch place: The computer will create recipes which can then be interpreted
+and executed by humans. 
+
+\section{Creative System Properties}
+In order to be creative, the system's output should be novel and useful. Novelty can be achieved by not
+repeating existing recipes. Instead, the system should disassemble existing recipes and use them as a
+knowledge source. 
+
+The more interesting part is to ensure useful recipes. First, it must be possible to actually cook 
+the recipe: Therefore, the ingrediences have to match the cooking techniques applied to them. This
+is similar to type checking or type inference other in programming languages.
+
+Then, ingrediences should match based on taste. This is probably way more subjective and probably,
+hard constraints should be avoided here to allow the creation of avantguarde recipes. Still, not
+everything should be put together.
+
+\section{Time Management}
+% point out, how time can be saved as it's only to credits
+The time frame to complete the project is one teaching period and the course is worth 2~CP. 
+A thorough design and implementation however may take more time than available. Therefore,
+time management measures have to be taken to ensure the success of the project.
+
+The problem can be addressed by simplifying the task. Instead of implementing the full system,
+the semantic model could be used to display the recipe as a graph or as an assembler-like language.
+This requires only the implementation of stages 0 to 3 (see below). Though I really would like to
+implement stages 4 and 5, they probably should be considered optional within this project.
+
+\section{Implementation Details}
+\setcounter{subsection}{-1}
+% introduce all the modules and mention:
+%  - purpose and functioning
+%  - libraries
+%  - time management
+The project will be coded in python2.x. The program will consist of several modules or ``stages'':
+
+\newcommand{\paf}{\paragraph{Purpose and Functioning:}}
+\newcommand{\lib}{\paragraph{Libraries and Services:}}
+\newcommand{\tm}{\paragraph{Time Management and Optional Functionality:}}
+\renewcommand{\thesubsection}{Stage \arabic{subsection}:}
+
+\subsection{Database Layer}
+\paf Persistent storage and fast execution, especially for \ref{sem} and \ref{ana}. Due to the nature
+of the data, a nosql database was chosen instead of forcing the data into a relational scheme.
+\lib mongodb (\url{http://www.mongodb.org/}), python-mongoengine
+
+\subsection{Document Retrieval}
+\paf To avoid any licensing issues, wikibooks is the source of choice. Content can be incrementally retrieved using the API.
+\lib Wikibooks (\url{http://en.wikibooks.org/wiki/Cookbook:Table_of_Contents}),
+Mediawiki API (\url{http://en.wikibooks.org/w/api.php})
+
+\subsection{Document and Language Processing}
+\paf The document has to be divided into parts. Ingredient list(s) and recipe body (bodies) have to be 
+discovered. Some basic language processing has to be applied to the recipies body, in order to get the steps.
+\lib python-nltk (\url{http://www.nltk.org/})
+\tm Typically, recipes are written in imperative form which simplifies technique recognizion. Typical tools
+and ingrediences can be looked up on wikibooks. The language model will be kept as simple as possible. 
+Only move to a more complicated model, if the coverage is insufficient.
+
+\subsection{Semantic Model}\label{sem}
+\paf A signature has to be assigned to the verbs within the steps, so that the result is clear to the
+algorithm. Some might be classified using the wikibooks technique category. All others will have to be
+modeled by hand. Also, model what happens to ingrediences after a function is applied.
+Display recipes as recipe assembler and nice graphs.
+\tm Begin with most frequent verbs, to get a good coverage quickly. This is one of the more important steps.
+
+\subsection{Analysis}\label{ana}
+\paf Use data mining algorithms like the A Priori Algorithm to detect common rules in the data. Cluster or tag
+ingrediences, techniques and kitchen tools based on the data. Additional data sources can be used to improve the results.
+\lib python-numpy, python-sklearn. 
+\tm Due to time restrictions, this stage should be considered optional.
+
+\subsection{Recipe Creation}\label{cre}
+\paf Start with some random (fitting) ingrediences and apply ``good'' rules. When a valid end node is 
+reached, strip the graph and output a new recipe. Also generate ingredient quantities,
+preparation time and difficulty.
+\tm Due to time restrictions, this stage should be considered optional.
+
+\end{document}
