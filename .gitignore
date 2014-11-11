@@ -4,3 +4,8 @@
 *.pickle
 *.mco
 lang/maltparser-1.8/
+*.pdf
+*.backup
+*~
+*.log
+*.aux
