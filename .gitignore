@@ -1,0 +1,6 @@
+*.pyc
+*.pyo
+*.gz
+*.pickle
+*.mco
+lang/maltparser-1.8/
