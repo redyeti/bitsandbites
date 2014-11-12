@@ -18,8 +18,9 @@ class WikibooksFetcher(Fetcher):
 		for querypage in g:
 			for page in querypage['pages'].values():
 				pageid = page['pageid']
-				payload = page['revisions'][0]["*"]
-				uid = "{http://en.wikibooks.org:%i}" % pageid
-				doc = RawRecipe(uid=uid, payload=payload, format="wiki")
-				doc.save()
-				yield doc
+				if "revisions" in page:
+					payload = page['revisions'][0]["*"]
+					uid = "{http://en.wikibooks.org:%i}" % pageid
+					doc = RawRecipe(uid=uid, payload=payload, parser="WikiParser")
+					doc.save()
+					yield doc

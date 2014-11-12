@@ -1,18 +1,32 @@
 import abc
-from fetch/fetcher import RawRecipe
+from fetch.fetcher import RawRecipe
+
+class ParseMeta(abc.ABCMeta):
+	def __init__(cls, *args, **params):
+		abc.ABCMeta.__init__(cls, *args, **params)
+		cls._dispatch[cls.__name__] = cls
 
 class Layoutparser(object):
-	__METACLASS__ = abc.ABCMeta
+	__metaclass__ = ParseMeta
 
-	type = abc.abstractproperty()
+	_dispatch = {}
 
-	def parseDB(self):
-		for doc in RawRecipe.objects(type=self.type):
-			data = self.parseDoc(doc)
+	@classmethod
+	def dispatch(cls, name, *args, **params):
+		return cls._dispatch[name](*args, **params)
 
-	def parseDoc(self, doc):
-		return self.parseText(doc.payload)
+	@classmethod
+	def parseDB(cls):
+		for doc in RawRecipe.objects():
+			data = cls.parseDoc(doc)
+			yield data
+
+	@classmethod
+	def parseDoc(cls, doc):
+		return cls.dispatch(doc.parser).parseText(doc.payload)
 
 	@abc.abstractmethod
 	def parseText(self, text):
 		pass
+
+__all__ = ("Layoutparser",)

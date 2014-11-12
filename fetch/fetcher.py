@@ -3,11 +3,15 @@ import db
 
 class RawRecipe(db.Document):
 	uid = db.StringField(primary_key=True)
-	format = db.StringField(required=True, index=True)
+	parser = db.StringField(required=True)
 	payload = db.StringField(required=True)
 
+	meta = {
+		'indexes': ['parser']
+	}
+
 class Fetcher(object):
-	__METACLASS__ = abc.ABCMeta
+	__metaclass__ = abc.ABCMeta
 
 	@abc.abstractmethod
 	def fetch(self):
