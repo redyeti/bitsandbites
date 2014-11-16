@@ -1,13 +1,9 @@
 import abc
 from db.types import RawRecipe
-
-class ParseMeta(abc.ABCMeta):
-	def __init__(cls, *args, **params):
-		abc.ABCMeta.__init__(cls, *args, **params)
-		cls._dispatch[cls.__name__] = cls
+from util import DispatchMeta
 
 class Layoutparser(object):
-	__metaclass__ = ParseMeta
+	__metaclass__ = DispatchMeta
 
 	_dispatch = {}
 
