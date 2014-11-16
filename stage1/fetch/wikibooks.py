@@ -1,5 +1,6 @@
-from fetcher import Fetcher, RawRecipe
-import mwapi
+from fetcher import Fetcher
+from db.types import RawRecipe
+from util import mwapi
 
 class WikibooksFetcher(Fetcher):
 	def fetch(self, categories=["Recipes"]):

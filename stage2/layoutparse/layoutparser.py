@@ -1,5 +1,5 @@
 import abc
-from fetch.fetcher import RawRecipe
+from db.types import RawRecipe
 
 class ParseMeta(abc.ABCMeta):
 	def __init__(cls, *args, **params):

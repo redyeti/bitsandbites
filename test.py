@@ -2,11 +2,11 @@ import sys
 reload(sys)
 sys.setdefaultencoding("utf8")
 
-import fetch
-from layoutparse import Layoutparser
+from stage1 import fetch
+from stage2.layoutparse import Layoutparser
 from pprint import pprint
 
-import lang
+from stage2 import lang
 
 # -- stage 1 --
 #fetch.wikibooks(["Cake recipes"])
