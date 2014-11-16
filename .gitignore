@@ -4,6 +4,7 @@
 *.pickle
 *.mco
 lang/maltparser-1.8/
+stage2/lang/maltparser-1.8/
 *.pdf
 *.backup
 *~

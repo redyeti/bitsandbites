@@ -1,5 +1,6 @@
 from ..layoutparser import Layoutparser
 from headparser import HeadParser
+from linkmatch import Linkmatch
 import re
 import nltk
 
@@ -35,11 +36,13 @@ class WikiParser(Layoutparser):
 		# Use a Section.parse to find all section headings
 		# Use this array to create Section objects with headline/body
 		d = H1Parser().parse(text).toDict()
-		d['Ingredients'] = ItemParser().parse(d['Ingredients']).toList()
+
+
+		d['Ingredients'] = map(Linkmatch.sub, ItemParser().parse(d['Ingredients']).toList())
 		d['Procedure'] = ItemParser().parse(d['Procedure']).toList()
 		for i, step in enumerate(d['Procedure']):
-			d['Procedure'][i] = nltk.sent_tokenize(step)
-		
+			d['Procedure'][i] = map(Linkmatch.sub, nltk.sent_tokenize(step))
+
 		return d
 
 		# Use an Item.parse to find all items
