@@ -24,13 +24,13 @@ if "2" in args:
 		print "origin:", doc.uid
 		spr = SyntaxParsedRecipe(origin=doc)
 		for i,ingr in enumerate(d['Ingredients']):
-			t = lang.process(ingr)
+			t = lang.process(ingr, False)
 			m = mktree(t)
 			s = Block(tree=m, position=(i,))
 			spr.ingredients.append(s)
 		for i,step in enumerate(d['Procedure']):
 			for j,sentence in enumerate(step):
-				t = lang.process(sentence)
+				t = lang.process(sentence, True)
 				m = mktree(t)
 				print "Tr:", m
 				s = Block(tree=m, position=(i,j))

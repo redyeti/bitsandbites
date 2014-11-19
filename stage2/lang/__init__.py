@@ -121,33 +121,46 @@ def completeTags(tagged):
 
 
 
-def fixTags(tagged):
+def fixTags(tagged, step=True):
 	"""Correct typical tagging errors"""
 	for i, c in enumerate(tagged):
 		if c.tag == "MD" and i>=1 and tagged[i-1].tag.startswith("CD"):
 			yield (c.word, "NN")
+		elif c.tag == "VBZ" and i>=1 and tagged[i-1].tag == "AT":
+			yield (c.word, "NNS")
+		elif c.tag == "VB" and i>=1 and tagged[i-1].tag == "AT":
+			yield (c.word, "NN")
+		elif c.tag == "NN" and i>=2 and tagged[i-1].tag == "CC" and tagged[i-2].tag == "VB":
+			yield (c.word, "VB")
+		elif step and i == 0 and c.tag == "NN":
+			yield (c.word, "VB")
+		elif c.word in ("heat"):
+			yield (c.word, "NN")
 		else:
 			yield c
 
-def process(sentence):
+def process(sentence, step=True):
 	tokens = nltk.word_tokenize(sentence)
 	tagged = prettify(tt.tag(tokens))
 	tagged = prettify(completeTags(tagged))
-	tagged = prettify(fixTags(tagged))
+	tagged = prettify(fixTags(tagged, step))
 
 	grammar = ur"""
 		COUNTER:
-			{<CD|CD-HL|AT>+ }
 			{<ABN> <AT>}
+			{<CD|CD-HL|AT>+ }
 
 		COUNTER:
-			{<COUNTER> <TO> <COUNTER>}
+			{<COUNTER> <TO|IN> <COUNTER>}
 
 		VERB:
 			{<VB> <TO|IN>?}
 			# {<VBG> <TO|IN>}
-			{<VBG>} <COUNTER|AT>
+			# {<VBG>} <COUNTER|AT>
 			(^ | <,> ) { <NP|JJ-TL> }
+
+		VERB:
+			{ <VERB> <CC> <VERB> }
 
 		IMP:
 			{<UNK|JJR?|RB|RP|QL|QLP|DT>+}
@@ -168,17 +181,17 @@ def process(sentence):
 			{<PPS|PPO>}
 			{<UNIT>? <IMP>? <NNS?>* <VBG|VBD>} <,|CC|.>
 
+		LIST:
+			{<ENTITY> (<,>? <,|CC> <ENTITY>)* }
+			{<ENTITY>}
+
 		SETTING: 
 			{<IN> <IMP>? <LIST>}
 			{<IN|TO> <UNIT>}
 			{<CS> <IMP>? <VBN>}
 
-		LIST:
-			{<ENTITY> (<,> <ENTITY>)* <,>? <CC> <ENTITY>}
-			{<ENTITY>}
-
 		INSTRUCT:
-			{ (<SETTING> <,>?)? <VERB> <IMP>? <SETTING>* <LIST>? <TO|IN> <LIST> <SETTING>* <IMP>?}
+			# { (<SETTING> <,>?)? <VERB> <IMP>? <SETTING>* <LIST>? <TO|IN> <LIST> <SETTING>* <IMP>?}
 			{ (<SETTING> <,>?)? <VERB> <IMP>? <SETTING>* <LIST> <IMP>? <SETTING>* <IMP>?}
 			{ (<SETTING> <,>?)? <VERB> <IMP>? <SETTING>* <IMP>?}
 

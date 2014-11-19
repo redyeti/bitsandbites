@@ -1,4 +1,5 @@
 import db
+from pprint import pprint
 
 # a. define instruction families sharing a signature
 
@@ -57,6 +58,12 @@ class DataObject(object):
 	def primary(self):
 		return self.__primary
 
+	def __setitem__(self, i, v):
+		self.__data[i] = v
+
+	def __getitem__(self, i):
+		return self.__data[i]
+
 	@property
 	def data(self):
 		return self.__data
@@ -106,30 +113,76 @@ class RasmInstance(object):
 @RasmInstance("DECLARE", ["declare"])
 class Declaration(RasmInstruction):
 	def run(self, re, l, s):
+		yield [] # no requirements
+		yield [] # no input
+
 		entity = l()
 		unit = entity['UNIT'].text
 		var = entity['!UNIT'].text
+		pointers = {var}
+		var2 = entity['!UNIT']['!IMP'].text
+		if var2 not in re.pointers:
+			pointers.add(var2)
 
-		re.pointers[var] = DataObject(var,
-			{
-				var: {"amount": unit},
-			}
-		)
+		for pointer in pointers:
+			re.pointers[pointer] = DataObject(var,
+				{
+					var: {"amount": unit},
+				}
+			)
 
-		return InstructionInfo(
-			name = self.name,
-			outPointers = [var],
-			outData = [re.pointers[var].toDbObject()],
-		)
+		yield list(pointers)
 
-@RasmInstance("HEAT", ["preheat"])
+
+#FIXME: these are only temporary, we'll deal with them later
+@RasmInstance("NOP", ["place on", "reach"])
+class Nop(RasmInstruction):
+	def run(self, re, l, s):
+		yield [] # no requirements
+		yield [] # no input
+		yield [] # no output
+
+@RasmInstance("ALIAS", ["take"])
+class Remap(RasmInstruction):
+	def run(self, re, l, s):
+		entities = [x['!Unit']['!Imp'].text for x in l['Entity']]
+		yield []
+		yield entities
+		yield ["_"]
+
+@RasmInstance("HEAT_OVEN", ["preheat"])
 class Heat(RasmInstruction):
 	def run(self, re, l, s):
 		entity = l['Entity'][0].text
 		assert(entity == "oven")
-		print "S:", s
-		print "Set:", s['UNIT'][0] 
-		1/0
+		yield ["oven"]
+
+		yield ["oven"]
+		unit = s['UNIT'][0]['Counter'].text
+	
+		pre = re.pointers['oven'].toDbObject()
+		re.pointers['oven']['oven']['to'] = unit
+		yield ["oven"]
+
+@RasmInstance("COOK", ["heat"])
+class Inplace(RasmInstruction):
+	def run(self, re, l, s):
+		yield [] # no requirements
+		entities = [x['!Unit']['!Imp'].text for x in l['Entity']]
+		yield entities
+		for ent in entities:
+			re.pointers[ent]["+"+self.name.lower()] = {}
+		yield entities + ["_"]
+
+@RasmInstance("GREASE", ["grease"])
+class TInplace(RasmInstruction):
+	def run(self, re, l, s):
+		entities = [x['!Unit'].text for x in l['Entity']]
+		yield entities
+		yield entities
+		for ent in entities:
+			re.pointers[ent]["+"+self.name.lower()] = {}
+		yield entities
 
 class InstructionFactory(object):
 	def __init__(self):
@@ -155,7 +208,42 @@ class InstructionFactory(object):
 	def __run(self, ins, s):
 		settings = s['Setting']()
 		lists = s['List']()
-		return ins.run(self.__re, lists, settings)
+
+		r = ins.run(self.__re, lists, settings)
+		# yieds 3 times:
+		# 1. requirements
+		# 2. inPointers
+		# 3. outPointers
+		requirements = r.next()
+		for req in requirements:
+			if req not in self.__re.pointers:
+				self.__re.pointers[req] = DataObject(req,
+					{
+						req: {"prop": "tool"},
+					}
+				)
+
+		try: 
+			inPointers = r.next()
+			inData = [self.__re.pointers[x].toDbObject() for x in inPointers]
+
+			outPointers = r.next()
+			if outPointers:
+				self.__re.pointers["_"] = self.__re.pointers[outPointers[0]]
+			outData = [self.__re.pointers[x].toDbObject() for x in outPointers]
+		except KeyError:
+			pprint(self.__re.pointers)
+			raise
+				
+		return InstructionInfo(
+			name = ins.name,
+			inPointers = inPointers,
+			inData = inData,
+			requires = requirements,
+			outPointers = outPointers,
+			outData = outData,
+		)
+		
 
 
 	def __lookupInstruction(self, s):
