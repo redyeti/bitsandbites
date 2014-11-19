@@ -1,38 +1,41 @@
 from node import Node
 import leaf
 
+@Node.attach
 class Imp(Node):
 	pass
 
+@Node.attach
 class List(Node):
 	pass
 
+@Node.attach
 class S(Node):
 	pass
 
+@Node.attach
 class Setting(Node):
 	pass
 
+@Node.attach
 class Counter(Node):
 	pass
 
+@Node.attach
 class Unit(Node):
 	pass
 
+@Node.attach
 class Entity(Node):
+	pass
+
+@Node.attach
+class Instruct(Node):
+	pass
+
+@Node.attach
+class Verb(Node):
 	pass
 
 mktree = Node.fromTree
 
-if __name__ == "__main__":
-	import sys
-	reload(sys)
-	sys.setdefaultencoding("utf8")
-	
-	from stage2.layoutparse import Layoutparser
-	from stage2 import lang
-
-	d = Layoutparser.parseDB().next()
-	for step in d['Procedure']:
-		for sentence in step:
-			t = lang.process(sentence)

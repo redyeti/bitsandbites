@@ -3,6 +3,7 @@ from headparser import HeadParser
 from linkmatch import Linkmatch
 import re
 import nltk
+import HTMLParser
 
 class H1Parser(HeadParser):
 	re_head = re.compile(r"(?:^|\n)\s*==\s*(.*?)\s*==\s*(?=\n)")
@@ -11,6 +12,17 @@ class ItemParser(HeadParser):
 	re_head = re.compile(r"(?:^|\n)\s*[*#]\s*(.*?)(?=\n|$)")
 
 class WikiParser(Layoutparser):
+	re_html = re.compile(r"</?[a-zA-Z]+\s*/?>")
+	html_parser = HTMLParser.HTMLParser()
+
+	def preparse(self, text):
+		text = Linkmatch.sub(text)
+		text = text.replace("'''", "")
+		text = text.replace("''", "")
+		text = self.re_html.sub("", text)
+		text = self.html_parser.unescape(text)
+		return text
+
 	def parseText(self, text):
 		#TODO
 		# verify this is a recipe -> {{recipe}}
@@ -38,10 +50,10 @@ class WikiParser(Layoutparser):
 		d = H1Parser().parse(text).toDict()
 
 
-		d['Ingredients'] = map(Linkmatch.sub, ItemParser().parse(d['Ingredients']).toList())
+		d['Ingredients'] = map(self.preparse, ItemParser().parse(d['Ingredients']).toList())
 		d['Procedure'] = ItemParser().parse(d['Procedure']).toList()
 		for i, step in enumerate(d['Procedure']):
-			d['Procedure'][i] = map(Linkmatch.sub, nltk.sent_tokenize(step))
+			d['Procedure'][i] = map(self.preparse, nltk.sent_tokenize(step))
 
 		return d
 

@@ -1,14 +1,28 @@
 from node import Node
+import db
 
+@Node.attach
 class Leaf(Node):
-	def __init__(self, children, name, tag):
+
+	__name = db.StringField(required=True)
+	__tag = db.StringField()
+
+	def _init(self, children, name, tag):
+		Node._init(self, children)
 		assert(children == [])
-		Node.__init__(self, children)
 		self.__name = name
 		self.__tag = tag
 
+
+	@property
+	def tag(self):
+		return self.__tag
+
 	def __repr__(self):
 		return "<%s, %s>" % (self.__class__.__name__, repr((self.__name, self.__tag)))
+
+	def __str__(self):
+		return "%s[%s]" % (self.__tag, self.__name)
 
 	@property	
 	def leaves(self):

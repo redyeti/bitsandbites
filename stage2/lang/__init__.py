@@ -66,24 +66,31 @@ def splitTagUnit(i,w,t,c):
 		yield (n, "CD")
 		if u:
 			yield (u, "NP")
+
+from collections import namedtuple
+TagTuple = namedtuple("TagTuple", "word tag")
+def prettify(tagged):
+	return [TagTuple(*x) for x in tagged]
+
 tags = [
 	# tuples: (word, tag)
 	# or functions: (index, word, tag, context) -> tag
 	splitTagUnit,
-	(u"°", "U°"),
-	(u"½", "AT"),
-	(u"¼", "AT"),
-	(u"¾", "AT"),
-	(u"⅜", "AT"),
-	(u"⅝", "AT"),
-	(u"⅞", "AT"),
-	(u"⅛", "AT"),
+	TagTuple(u"°", "U°"),
+	TagTuple(u"½", "AT"),
+	TagTuple(u"¼", "AT"),
+	TagTuple(u"¾", "AT"),
+	TagTuple(u"⅜", "AT"),
+	TagTuple(u"⅝", "AT"),
+	TagTuple(u"⅞", "AT"),
+	TagTuple(u"⅛", "AT"),
 	lambda i,w,t,c: wiktionary.lookupTos(w),
 	lambda i,w,t,c: "AT" if i>0 and c[i-1][1] else None,
 	lambda i,w,t,c: "UNK"
 ]
 
-def fixtags(tagged):
+def completeTags(tagged):
+	"""Completes Tags tagged with None."""
 	# okay, this looks ugly, but it simplifies
 	# the definition of manual tag entries as
 	# above
@@ -94,8 +101,8 @@ def fixtags(tagged):
 			while True:
 				nexttag = itertags.next()
 				if isinstance(nexttag, tuple):
-					if nexttag[0] == w:
-						yield (w, nexttag[1])
+					if nexttag.word == w:
+						yield (w, nexttag.tag)
 						break
 				else:
 					n = nexttag(i,w,t,tagged)
@@ -112,12 +119,21 @@ def fixtags(tagged):
 		else:
 			yield (w,t)
 
+
+
+def fixTags(tagged):
+	"""Correct typical tagging errors"""
+	for i, c in enumerate(tagged):
+		if c.tag == "MD" and i>=1 and tagged[i-1].tag.startswith("CD"):
+			yield (c.word, "NN")
+		else:
+			yield c
+
 def process(sentence):
 	tokens = nltk.word_tokenize(sentence)
-	tagged = tt.tag(tokens)
-
-
-	tagged = list(fixtags(tagged))
+	tagged = prettify(tt.tag(tokens))
+	tagged = prettify(completeTags(tagged))
+	tagged = prettify(fixTags(tagged))
 
 	grammar = ur"""
 		COUNTER:
@@ -129,7 +145,7 @@ def process(sentence):
 
 		VERB:
 			{<VB> <TO|IN>?}
-			{<VBG> <TO|IN>}
+			# {<VBG> <TO|IN>}
 			{<VBG>} <COUNTER|AT>
 			(^ | <,> ) { <NP|JJ-TL> }
 
@@ -138,18 +154,19 @@ def process(sentence):
 			{<VBN>} <NNS?|NP>
 
 		UNIT:
-			{<COUNTER> <NNS?>? } <.*>
-			{<COUNTER> <NNS?> <(> <COUNTER> <NNS?> <)> } <.*>
-			{<COUNTER> <NP>}
-			{<COUNTER> <U°> <NP|NNS?>}
+			{<COUNTER> <NP> <IN>?}
+			{<COUNTER> <NNS?>? <IN>?} <VBG|VBD|IMP|NNS?|\(|\)>
+			{<COUNTER> <NNS?> <IN>?}
+			{<COUNTER> <NNS?> <(> <COUNTER> <NNS?> <)> <IN>? } <.*>
+			{<COUNTER> <U°> <NP|NNS?> <IN>?}
 
 		UNIT:
 			{ <UNIT> <\(> <UNIT> <\)> }
 
 		ENTITY:
-			{<UNIT>? <IMP>? <NNS?|VBG>* <NNS?>}
-			{<PPS>}
-			{<UNIT>? <IMP>? <NNS?>* <VBG>} <,|CC|.>
+			{<UNIT>? <IMP>? <NNS?|VBG|VBD>* <NNS?>}
+			{<PPS|PPO>}
+			{<UNIT>? <IMP>? <NNS?>* <VBG|VBD>} <,|CC|.>
 
 		SETTING: 
 			{<IN> <IMP>? <LIST>}
@@ -161,9 +178,9 @@ def process(sentence):
 			{<ENTITY>}
 
 		INSTRUCT:
-			{ (<SETTING> <,>?)? <VERB> <SETTING>* <LIST>? <TO|IN> <LIST> <SETTING>* <IMP>?}
-			{ (<SETTING> <,>?)? <VERB> <SETTING>* <LIST> <IMP>? <SETTING>* <IMP>?}
-			{ (<SETTING> <,>?)? <VERB> <SETTING>* <IMP>?}
+			{ (<SETTING> <,>?)? <VERB> <IMP>? <SETTING>* <LIST>? <TO|IN> <LIST> <SETTING>* <IMP>?}
+			{ (<SETTING> <,>?)? <VERB> <IMP>? <SETTING>* <LIST> <IMP>? <SETTING>* <IMP>?}
+			{ (<SETTING> <,>?)? <VERB> <IMP>? <SETTING>* <IMP>?}
 
 		AVOID:
 			{<DO> <\*> <INSTRUCT>}
@@ -171,7 +188,7 @@ def process(sentence):
 	"""
 	cp = nltk.RegexpParser(grammar)
 
-	t = cp.parse(tagged)
+	t = cp.parse([tuple(x) for x in tagged])
 	told = None
 
 	while told != t:

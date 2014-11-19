@@ -12,10 +12,14 @@ class Layoutparser(object):
 		return cls._dispatch[name](*args, **params)
 
 	@classmethod
-	def parseDB(cls):
+	def parseDB(cls, ignore_errors = False):
 		for doc in RawRecipe.objects():
-			data = cls.parseDoc(doc)
-			yield data
+			try:
+				data = cls.parseDoc(doc)
+				yield (doc, data)
+			except: #sic!
+				if not ignore_errors:
+					raise
 
 	@classmethod
 	def parseDoc(cls, doc):
