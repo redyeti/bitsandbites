@@ -5,6 +5,10 @@ import db
 class ChildrenView(Sequence):
 	def __init__(self, base):
 		self.__base = base
+
+
+	def __call__(self):
+		return self.cut().children
 	def __getitem__(self, i):
 		if isinstance(i,basestring):
 			i = i.lower()
@@ -16,13 +20,21 @@ class ChildrenView(Sequence):
 				cond = lambda n,x: n != i[1:]
 			else:
 				cond = lambda n,x: n == i
-			return Node([x for x in self.__base._children if cond(x.__class__.__name__.lower(),x)])
+			return Node([x for x in self.__base._children if cond(x.__class__.__name__.lower(),x)]).children
 		elif isinstance(i, slice):
-			return Node(self.__base._children[i])
+			return Node(self.__base._children[i]).children
 		else:
-			return self.__base._children[i]
+			return self.__base._children[i].children
 	def __len__(self):
 		return len(self.__base._children)
+
+	def __getattr__(self, i):
+		return getattr(self.__base, i)
+
+	def __str__(self):
+		return str(self.__base)
+
+	__repr__ = __str__
 
 class Node(db.EmbeddedDocument):
 	_dispatch = {}

@@ -106,9 +106,9 @@ class RasmInstance(object):
 @RasmInstance("DECLARE", ["declare"])
 class Declaration(RasmInstruction):
 	def run(self, re, l, s):
-		entity = l.cut()
-		unit = entity.children['UNIT'].text
-		var = entity.children['!UNIT'].text
+		entity = l()
+		unit = entity['UNIT'].text
+		var = entity['!UNIT'].text
 
 		re.pointers[var] = DataObject(var,
 			{
@@ -125,10 +125,10 @@ class Declaration(RasmInstruction):
 @RasmInstance("HEAT", ["preheat"])
 class Heat(RasmInstruction):
 	def run(self, re, l, s):
-		entity = l.children['Entity'].children[0].text
+		entity = l['Entity'][0].text
 		assert(entity == "oven")
 		print "S:", s
-		print "Set:", s.children['UNIT'].children[0] 
+		print "Set:", s['UNIT'][0] 
 		1/0
 
 class InstructionFactory(object):
@@ -136,12 +136,13 @@ class InstructionFactory(object):
 		self.__re = RuntimeEnvironment()
 
 	def interpretDeclaration(self, s, pos):
+		print "S:", s
 		ins = self.__lookupInstruction("declare")
 		return self.__run(ins, s)
 
 	def interpretInstruction(self, s, pos):
 		# 1. identify and lookup command
-		cmd = s.children['Verb'].text
+		cmd = s['Verb'].text
 
 		try:
 			ins = self.__lookupInstruction(cmd)
@@ -152,8 +153,8 @@ class InstructionFactory(object):
 		return self.__run(ins, s)
 
 	def __run(self, ins, s):
-		settings = s.children['Setting']
-		lists = s.children['List'].cut()
+		settings = s['Setting']()
+		lists = s['List']()
 		return ins.run(self.__re, lists, settings)
 
 

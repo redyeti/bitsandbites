@@ -51,7 +51,7 @@ if "3" in args:
 		for i in spr.ingredients:
 			if i.tree.children:
 				print i.tree
-				print ifc.interpretDeclaration(i.tree, i.position)
+				print ifc.interpretDeclaration(i.tree.children, i.position)
 		for s in spr.sentences:
 			instructs = s.tree.children['Instruct']
 			print
