@@ -54,7 +54,7 @@ class Node(db.EmbeddedDocument):
 			return cls._dispatch["leaf"]([], *tree)
 
 	def __init__(self, *args, **kwargs):
-		if kwargs:
+		if not args:
 			db.EmbeddedDocument.__init__(self, **kwargs)
 			return
 		else:
@@ -96,8 +96,9 @@ class Node(db.EmbeddedDocument):
 	@property
 	def html(self):
 		from lxml.html import builder as E
-		return E.SPAN(
-			E.CLASS("tree"+self.__class__.__name__),
+		return E.DIV(
+			E.CLASS("treeObject tree"+self.__class__.__name__),
+			self.__class__.__name__,
 			*[x.html for x in self._children]
 		)
 

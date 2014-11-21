@@ -43,11 +43,13 @@ if "3" in args:
 	from stage2 import SyntaxParsedRecipe
 	import db
 	from pprint import pprint
-
+	from collections import defaultdict
 	from stage3 import InstructionFactory
+	from stage3 import InstructionError
 
-	ifc = InstructionFactory()
+	errors = defaultdict(lambda:0)
 	for spr in SyntaxParsedRecipe.objects:
+		ifc = InstructionFactory()
 		for i in spr.ingredients:
 			if i.tree.children:
 				print i.tree
@@ -55,9 +57,22 @@ if "3" in args:
 		for s in spr.sentences:
 			instructs = s.tree.children['Instruct']
 			print
-			print "Coverage: %i%%" % (100.*len(instructs.leaves)/float(len(s.tree.leaves)))
-			print s.tree
-			print "--"
+			#print "Coverage: %i%%" % (100.*len(instructs.leaves)/float(len(s.tree.leaves)))
 			for n, ins in enumerate(instructs.children):
 				if ins.children:
-					print ifc.interpretInstruction(ins, s.position+[n])
+					try:
+						print ifc.interpretInstruction(ins, s.position+[n])
+					except AssertionError as e:
+						errors["assertion"] += 1
+					except InstructionError as e:
+						errors[e.key] += 1
+		try:
+			ifc.finalize()
+		except InstructionError as e:
+			errors[e.key] += 1
+
+	m = max(errors.values())
+	for i in range(m):
+		for k,v in errors.iteritems():
+			if v == i+1:
+				print v, k

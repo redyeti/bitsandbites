@@ -1,0 +1,7 @@
+how to find samples containing nutmeg:
+
+	db.rule_sample.find({outData: {'$elemMatch': {nutmeg: {'$exists': true }}}})
+
+together with a rule name:
+
+	db.rule_sample.find({name: "STIR", outData: {'$elemMatch': {nutmeg: {'$exists': true }}}})

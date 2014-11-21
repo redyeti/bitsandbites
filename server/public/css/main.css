@@ -1,0 +1,72 @@
+.tree {
+	display: flex;
+	margin-top: 35px;
+	margin-bottom: 5px;
+}
+
+.tree .treeObject {
+	border: 1px #ddd solid;
+	padding: 1px;
+	display: flex;
+	vertical-align: middle;
+}
+
+.tree .treeObject.treeEntity {
+	border: 1px blue solid;
+	background-color: #eef
+}
+
+.tree .treeObject.treeVerb {
+	border: 1px red solid;
+	background-color: #fee
+}
+
+.tree .treeObject.treeSetting {
+	border: 1px green solid;
+	background-color: #efe
+}
+
+.tree .treeObject.treeUnit {
+	border: 1px yellow solid;
+	background-color: #ffe
+}
+
+table.register {
+	border: 1px gray solid;
+	padding: 5px;
+	margin-top: 5px;
+	margin-bottom: 5px;
+}
+
+table.register td {
+	vertical-align: middle;
+	padding-left: 3px;
+	padding-right: 3px;
+}
+
+.fixed {
+	font-family: monospace;
+}
+
+table.instruct {
+	border: 1px red solid;
+	margin-top: 5px;
+	margin-bottom: 5px;
+}
+
+table.instruct td {
+	width: 50%;
+	white-space: nowrap;
+}
+
+table.instruct tr:nth-child(2) td {
+	border-bottom: 1px red solid;
+}
+
+table.instruct tr:nth-child(2) td:first-child {
+	text-align: center;
+}
+
+table.instruct tr:nth-child(3) td:first-child {
+	border-right: 1px red solid;
+}

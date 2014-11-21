@@ -39,7 +39,11 @@ class Leaf(Node):
 	@property
 	def html(self):
 		from lxml.html import builder as E
-		return E.SPAN(
-			E.CLASS("tree"+self.__class__.__name__),
-			self.__name
+		return E.DIV(
+			E.CLASS("treeObject tree"+self.__class__.__name__),
+			self.__tag,
+			E.DIV(
+				E.CLASS("treeObject treeLeaf"+self.__class__.__name__),
+				self.__name
+			)
 		)

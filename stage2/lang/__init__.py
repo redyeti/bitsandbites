@@ -132,9 +132,11 @@ def fixTags(tagged, step=True):
 			yield (c.word, "NN")
 		elif c.tag == "NN" and i>=2 and tagged[i-1].tag == "CC" and tagged[i-2].tag == "VB":
 			yield (c.word, "VB")
-		elif step and i == 0 and c.tag == "NN":
+		elif step and i == 0 and c.tag in ("NN","NP"):
 			yield (c.word, "VB")
-		elif c.word in ("heat"):
+		elif c.word == "extract" and i>=1 and tagged[i-1].tag == "NN":
+			yield (c.word, "NN")
+		elif c.word in ("heat",):
 			yield (c.word, "NN")
 		else:
 			yield c
@@ -154,6 +156,7 @@ def process(sentence, step=True):
 			{<COUNTER> <TO|IN> <COUNTER>}
 
 		VERB:
+			{<VB>}
 			{<VB> <TO|IN>?}
 			# {<VBG> <TO|IN>}
 			# {<VBG>} <COUNTER|AT>
