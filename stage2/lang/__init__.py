@@ -128,6 +128,8 @@ def fixTags(tagged, step=True):
 			yield (c.word, "NN")
 		elif c.tag == "VBZ" and i>=1 and tagged[i-1].tag == "AT":
 			yield (c.word, "NNS")
+		elif c.word == "in" and i>=1 and tagged[i-1].tag == "VB":
+			yield (c.word, "INX")
 		elif c.tag == "VB" and i>=1 and tagged[i-1].tag == "AT":
 			yield (c.word, "NN")
 		elif c.tag == "NN" and i>=2 and tagged[i-1].tag == "CC" and tagged[i-2].tag == "VB":
@@ -156,7 +158,7 @@ def process(sentence, step=True):
 			{<COUNTER> <TO|IN> <COUNTER>}
 
 		VERB:
-			{<VB>}
+			{<VB> <INX>?}
 			{<VB> <TO|IN>?}
 			# {<VBG> <TO|IN>}
 			# {<VBG>} <COUNTER|AT>
@@ -180,9 +182,9 @@ def process(sentence, step=True):
 			{ <UNIT> <\(> <UNIT> <\)> }
 
 		ENTITY:
-			{<UNIT>? <IMP>? <NNS?|VBG|VBD>* <NNS?>}
+			{<UNIT>? <IMP>? <NNS?|VBG|VBD|NN-HL>* <NNS?|NN-HL>}
 			{<PPS|PPO>}
-			{<UNIT>? <IMP>? <NNS?>* <VBG|VBD>} <,|CC|.>
+			{<UNIT>? <IMP>? <NNS?|NN-HL>* <VBG|VBD>} <,|CC|.>
 
 		LIST:
 			{<ENTITY> (<,>? <,|CC> <ENTITY>)* }
@@ -190,7 +192,7 @@ def process(sentence, step=True):
 
 		SETTING: 
 			{<IN> <IMP>? <LIST>}
-			{<IN|TO> <UNIT>}
+			{<IN|TO> <LIST>}
 			{<CS> <IMP>? <VBN>}
 
 		INSTRUCT:

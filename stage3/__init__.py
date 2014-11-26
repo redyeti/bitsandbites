@@ -40,6 +40,7 @@ import db
 # - Storage: Document (before.serialize, FN.name, after.serialize)
 
 IGNORE_LIST = {
+	"minutes",
 }
 
 class InstructionError(RuntimeError):
@@ -283,7 +284,7 @@ class Finalize(RasmInstruction):
 		yield [] # no output 
 
 
-@RasmInstance("NOP", ["allow to"])
+@RasmInstance("NOP", ["allow"])
 class Nop(RasmInstruction):
 	def run(self, re, l, s):
 		yield [] # no requirements
@@ -328,6 +329,9 @@ class Heat(RasmInstruction):
 @RasmInstance("CLEAN", ["clean"])
 @RasmInstance("MICROWAVE", ["microwave"])
 @RasmInstance("COOL", ["cool"])
+@RasmInstance("POUR-PAN", ["pour"])
+@RasmInstance("CHOP", ["chop"])
+@RasmInstance("WHISK", ["whisk"])
 class Inplace(RasmInstruction):
 	def run(self, re, l, s):
 		yield [] # no requirements
@@ -356,7 +360,7 @@ class TInplace(RasmInstruction):
 		yield entities
 
 #FIXME: mix should be "+mix"!
-@RasmInstance("ADD", ["add", "mix in", "stir in","beat in", "pour","pour in", "combine"])
+@RasmInstance("ADD", ["add", "mix in", "stir in","beat in", "pour in", "combine"])
 class Add(RasmInstruction):
 	def run(self, re, l, s):
 		#if s:
