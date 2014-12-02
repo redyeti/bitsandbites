@@ -53,7 +53,10 @@ if "3" in args:
 		for i in spr.ingredients:
 			if i.tree.children:
 				print i.tree
-				print ifc.interpretDeclaration(i.tree.children, i.position)
+				try:
+					print ifc.interpretDeclaration(i.tree.children, i.position)
+				except InstructionError as e:
+					errors[e.key] += 1
 		for s in spr.sentences:
 			instructs = s.tree.children['Instruct']
 			print
@@ -76,3 +79,9 @@ if "3" in args:
 		for k,v in errors.iteritems():
 			if v == i+1:
 				print v, k
+
+if "4" in args:
+	import stage4
+	import db
+	stage4.run()
+	stage4.Rule.objects.delete()

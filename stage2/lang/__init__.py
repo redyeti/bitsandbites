@@ -136,9 +136,9 @@ def fixTags(tagged, step=True):
 			yield (c.word, "VB")
 		elif step and i == 0 and c.tag in ("NN","NP"):
 			yield (c.word, "VB")
-		elif c.word == "extract" and i>=1 and tagged[i-1].tag == "NN":
+		elif c.word.lower() == "extract" and i>=1 and tagged[i-1].tag == "NN":
 			yield (c.word, "NN")
-		elif c.word in ("heat",):
+		elif c.word.lower() in ("heat","pinch"):
 			yield (c.word, "NN")
 		else:
 			yield c
@@ -179,7 +179,7 @@ def process(sentence, step=True):
 			{<COUNTER> <U°> <NP|NNS?> <IN>?}
 
 		UNIT:
-			{ <UNIT> <\(> <UNIT> <\)> }
+			{ <UNIT> <\(> <UNIT> <\)> <IN>? }
 
 		ENTITY:
 			{<UNIT>? <IMP>? <NNS?|VBG|VBD|NN-HL>* <NNS?|NN-HL>}

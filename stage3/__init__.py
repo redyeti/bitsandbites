@@ -52,6 +52,14 @@ class InstructionError(RuntimeError):
 	def context(self):
 		return self.__context
 
+class InstructionAssertError(InstructionError):
+	def __init__(self, msg, context):
+		RuntimeError.__init__(self, "Invalid usage.", context)
+	@property
+	def key(self):
+		return "*OP"
+
+
 class InstructionLookupError(InstructionError):
 	def __init__(self, ins, context):
 		InstructionError.__init__(self, "Could not lookup instruction: "+ins, context)
@@ -249,7 +257,10 @@ class Declaration(RasmInstruction):
 		yield [] # no requirements
 		yield [] # no input
 
-		entity = l[0]
+		try:
+			entity = l[0]
+		except:
+			raise InstructionAssertError(l,s)
 		unit = entity['UNIT'].text
 		var = entity['!UNIT'].text
 		pointers = {var}
@@ -375,6 +386,7 @@ class Add(RasmInstruction):
 			if ent in IGNORE_LIST:
 				continue #FIXME: handle this intelligently!
 			for ing in re.pointers[ent]:
+				ing["+combine"] = {}
 				re.pointers[ptr].add(ing)
 		yield {ptr, "_"} #FIXME: also yield entities here?
 		
@@ -394,6 +406,7 @@ class COMBINE(RasmInstruction):
 			if ent in IGNORE_LIST:
 				continue #FIXME: handle this intelligently!
 			for ing in re.pointers[ent]:
+				ing["+combine"] = {}
 				re.pointers[ptr].add(ing)
 		yield {ptr, "_"} #FIXME: also yield entities here?
 
@@ -402,7 +415,7 @@ class InstructionFactory(object):
 		self.__re = RuntimeEnvironment()
 
 	def interpretDeclaration(self, s, pos):
-		#print "S:", s
+		print "S:", s
 		ins = self.__lookupInstruction("--declare--")
 		return self.__run(ins, s)
 

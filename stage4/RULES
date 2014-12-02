@@ -1,0 +1,9 @@
+i --> A: you may use i for A
+
+i <-- A: if you do A, then use i
+==> ¬i --> ¬A
+
+i --> A j: if you do A (with any j), you may also use i
+
+i <-- A j: if you do A with j, you have to use i also
+==> ¬i --> ¬A and ¬j 
