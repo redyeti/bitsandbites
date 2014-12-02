@@ -1,0 +1,32 @@
+Random: How to implement random = weighted roulette wheel in mongo?
+
+* Start with a random FINALIZE rule
+* Analyze input set rule: 
+  - store properties in the node
+  - follow the properties ordered by index DESC,
+    where index is the average max-distance from the leaves
+  - try to satisfy property with max(index - depth)
+* Repeat: depending on the depth of the recipe, add or replace rules
+
+     |______________
+     |              \
+     |               \
+     |_______________ \________________________
+     0             a   b
+
+     [0..a): only add node, if possible
+     [a..b): add or replace node
+        b  : replace node
+
+     a = MAXDEPTH < index(FINALIZE) <  b = MINDEPTH
+e.g.       2                               10
+
+    If all rules are satisfied, rate the recipe, based on scores:
+    Big scores are positive, low scores are negative!
+    TOTAL SCORE						= U * N (And some constraints!)
+	- U -> Usefulness:				= (IC + IH + RV) / 3
+		- IC -> Ingredience Co-Occurrence	= pairs_i_cooc / pairs_i_totals
+		- IH -> Ingredience Histogram		= 0.5 + min([cosine similarity])/2
+		- RV -> Rule Violation			= (satisfied_bwd + 1) / (all_bwd + 1)
+	- N -> Novelty:					= RR
+		- RR -> Recipe Repitition		= 1 - min([normalized compression distance])
