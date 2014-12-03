@@ -46,6 +46,9 @@ if "3" in args:
 	from collections import defaultdict
 	from stage3 import InstructionFactory
 	from stage3 import InstructionError
+	from stage3 import RuleSample
+
+	RuleSample.objects.delete()	
 
 	errors = defaultdict(lambda:0)
 	for spr in SyntaxParsedRecipe.objects:
@@ -83,5 +86,5 @@ if "3" in args:
 if "4" in args:
 	import stage4
 	import db
-	stage4.run()
 	stage4.Rule.objects.delete()
+	stage4.run()

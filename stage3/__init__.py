@@ -195,6 +195,7 @@ class RuleSample(db.Document):
 	inData = db.ListField()
 	outData = db.ListField()
 	requires = db.ListField()
+	index = db.IntField()
 
 	def __str__(self):
 		return "%(name)s %(inPointers)s/%(inData)s -> %(outPointers)s/%(outData)s" % self
@@ -278,7 +279,7 @@ class Declaration(RasmInstruction):
 
 		myset = {DataObject(var,
 				{
-					var: {"amount": unit},
+					var: {"amount": unit, "index": 0},
 				}
 		)}
 
@@ -321,7 +322,10 @@ class Heat(RasmInstruction):
 		try:
 			unit = s['UNIT'][0]['Counter'].text
 		except IndexError:
-			unit = s['List']()['Entity']()['UNIT'][0]['Counter'].text
+			try:
+				unit = s['List']()['Entity']()['UNIT'][0]['Counter'].text
+			except IndexError:
+				unit = ""
 	
 		for oven in re.pointers['oven']:
 			oven['oven']['to'] = unit
@@ -483,10 +487,20 @@ class InstructionFactory(object):
 				for ing in self.__re.pointers[p]:
 					outData.add(ing)
 			outData = [x.toDbObject() for x in outData]
+			for d in outData:
+				for k,v in d.iteritems():
+					if "index" in v:
+						v["index"] += 1
 		except KeyError as e:
 			#pprint(self.__re.pointers)
 			raise PointerResolutionError(e.args[0], s)
-				
+
+		
+		indexData = [x.values() for x in inData]
+		indexData = reduce(lambda a,b: a+b, indexData, [])
+		indexData = [x["index"] for x in indexData if "index" in x]
+		index = max(indexData + [0])
+
 		rs = RuleSample(
 			name = ins.name,
 			inPointers = inPointers,
@@ -494,6 +508,7 @@ class InstructionFactory(object):
 			requires = requirements,
 			outPointers = outPointers,
 			outData = outData,
+			index = index,
 		)
 		rs.save()
 		return rs

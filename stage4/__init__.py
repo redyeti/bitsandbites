@@ -58,11 +58,11 @@ class Q(object):
 
 # find operations
 
-MINFREQ = 0.001
+MINFREQ = 0.01
 MINCONF_FWD = 0.000023
 MINCONF_BWD = 0.000023
-MINQ_FWD = 0.0000001
-MINQ_BWD = 0.0000001
+MINQ_FWD = 0.000001
+MINQ_BWD = 0.000001
 
 total = RuleSample.objects.count()
 
