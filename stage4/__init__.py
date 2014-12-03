@@ -58,7 +58,7 @@ class Q(object):
 
 # find operations
 
-MINFREQ = 0.01
+MINFREQ = 0.001
 MINCONF_FWD = 0.000023
 MINCONF_BWD = 0.000023
 MINQ_FWD = 0.000001
@@ -85,6 +85,7 @@ def discover(q, t):
 	obj = RuleSample.objects(__raw__=q.dict)
 	
 	freq = obj.count() / total
+	index = obj.average("index")
 
 	if freq < MINFREQ:
 		return
@@ -110,7 +111,7 @@ def discover(q, t):
 					ismax = False
 
 	#if ismax:
-	yield q, freq
+	yield q, freq, index
 		
 
 import db
@@ -122,6 +123,7 @@ class Rule(db.Document):
 	freq = db.FloatField()
 	conf = db.FloatField()
 	q = db.FloatField()
+	index = db.FloatField()
 	
 	direction = db.StringField()
 
@@ -159,5 +161,6 @@ def run():
 						conf = conf,
 						q = q,
 						direction = direction,
+						index = x[2]
 					).save()
 

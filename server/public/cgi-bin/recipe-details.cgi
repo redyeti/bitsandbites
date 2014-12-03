@@ -46,6 +46,7 @@ for s in spr.sentences:
 	#print "Coverage: %i%%" % (100.*len(instructs.leaves)/float(len(s.tree.leaves)))
 	for n, ins in enumerate(instructs.children):
 		if ins.children:
+			print etree.tostring(ifc.re.html)
 			print "<div class='tree'>"
 			print etree.tostring(ins.html)
 			print "</div>"

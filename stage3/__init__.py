@@ -1,5 +1,6 @@
 #-*- coding: utf8 -*-
 import db
+import traceback
 
 #from pprint import pprint
 
@@ -47,6 +48,7 @@ class InstructionError(RuntimeError):
 	def __init__(self, msg, context):
 		RuntimeError.__init__(self, msg)
 		self.__context = context
+		traceback.print_exc()
 		
 	@property
 	def context(self):
@@ -55,6 +57,8 @@ class InstructionError(RuntimeError):
 class InstructionAssertError(InstructionError):
 	def __init__(self, msg, context):
 		RuntimeError.__init__(self, "Invalid usage.", context)
+		traceback.print_exc()
+
 	@property
 	def key(self):
 		return "*OP"
@@ -336,7 +340,7 @@ class Heat(RasmInstruction):
 @RasmInstance("BAKE", ["bake"])
 @RasmInstance("FROST", ["frost"])
 @RasmInstance("BEAT", ["beat"])
-@RasmInstance("STIR", ["stir", "mix"])
+@RasmInstance("STIR", ["stir", "mix", "cream"])
 @RasmInstance("BLEND", ["blend"])
 @RasmInstance("MELT", ["melt"])
 @RasmInstance("CUT", ["cut"])
@@ -357,8 +361,11 @@ class Inplace(RasmInstruction):
 		for ent in entities:
 			if ent in IGNORE_LIST:
 				continue #FIXME: handle this intelligently!
-			for ing in re.pointers[ent]:
-				ing["+"+self.name.lower()] = {}
+			try:
+				for ing in re.pointers[ent]:
+					ing["+"+self.name.lower()] = {}
+			except KeyError:
+				pass #if greedy
 		yield entities + ["_"]
 
 @RasmInstance("GREASE", ["grease"])
@@ -385,7 +392,7 @@ class Add(RasmInstruction):
 		ptr = "_"
 		yield []
 		entities = [x['!Unit'].text for x in l['Entity']]
-		yield entities
+		yield entities + ["_"]
 		for ent in entities:
 			if ent in IGNORE_LIST:
 				continue #FIXME: handle this intelligently!
@@ -469,8 +476,11 @@ class InstructionFactory(object):
 			for p in inPointers:
 				if p in IGNORE_LIST:
 					continue #FIXME: handle this intelligently!
-				for ing in self.__re.pointers[p]:
-					inData.add(ing)
+				try:
+					for ing in self.__re.pointers[p]:
+							inData.add(ing)
+				except KeyError:
+					pass #if greedy
 			inData = [x.toDbObject() for x in inData]
 
 			outPointers = list(r.next())
@@ -484,8 +494,11 @@ class InstructionFactory(object):
 			for p in outPointers:
 				if p in IGNORE_LIST:
 					continue #FIXME: handle this intelligently!
-				for ing in self.__re.pointers[p]:
-					outData.add(ing)
+				try:
+					for ing in self.__re.pointers[p]:
+						outData.add(ing)
+				except KeyError:
+					pass #if greedy
 			outData = [x.toDbObject() for x in outData]
 			for d in outData:
 				for k,v in d.iteritems():
