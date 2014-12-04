@@ -395,11 +395,11 @@ class Add(RasmInstruction):
 		ptr = "_"
 		yield []
 		entities = [x['!Unit'].text for x in l['Entity']]
-		yield entities
+		yield entities + ["_"]
 		for ent, ing in self.foreach(re, entities):
 			ing["+combine"] = {}
 			re.pointers[ptr].add(ing)
-		yield {ptr, "_"} #FIXME: also yield entities here?
+		yield entities + ["_"]
 		
 class InstructionFactory(object):
 	def __init__(self):
@@ -464,11 +464,14 @@ class InstructionFactory(object):
 			inData = [x.toDbObject() for x in inData]
 
 			outPointers = list(r.next())
-			if outPointers:
-				try:
-					self.__re.pointers["_"] = self.__re.pointers[outPointers[0]]
-				except KeyError:
-					pass #FIXME: later
+			nset = set()
+			if "_" in outPointers:
+				for p in outPointers:
+					try:
+						nset.update(self.__re.pointers[p])
+					except KeyError:
+						pass #FIXME: later
+				self.__re.pointers["_"] = nset
 
 			outData = set()
 			for p in outPointers:
