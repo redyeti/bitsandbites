@@ -152,7 +152,7 @@ def process(sentence, step=True):
 	grammar = ur"""
 		COUNTER:
 			{<ABN> <AT>}
-			{<CD|CD-HL|AT>+ }
+			{<CD|CD-.*|AT>+ }
 
 		COUNTER:
 			{<COUNTER> <TO|IN> <COUNTER>}
