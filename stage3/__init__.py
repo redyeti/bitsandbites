@@ -111,7 +111,7 @@ class Lookup(MutableMapping):
 		try:
 			return self.__p[i]
 		except KeyError as e:
-			if i in ("them", "mixture"):
+			if i in ("them", "mixture","ingredients"):
 				return self.__p["_"]
 			
 			for r in self.remap.get(i, ()):
@@ -347,6 +347,7 @@ class Heat(RasmInstruction):
 @RasmInstance("POUR-PAN", ["pour"])
 @RasmInstance("CHOP", ["chop"])
 @RasmInstance("WHISK", ["whisk"])
+@RasmInstance("CREAM", ["cream"])
 class Inplace(RasmInstruction):
 	def run(self, re, l, s):
 		yield [] # no requirements
@@ -376,6 +377,7 @@ class TInplace(RasmInstruction):
 
 #FIXME: mix should be "+mix"!
 @RasmInstance("ADD", ["add", "mix in", "stir in","beat in", "pour in", "combine"])
+@RasmInstance("SPRINKLE", ["sprinkle"])
 class Add(RasmInstruction):
 	def run(self, re, l, s):
 		#if s:
