@@ -20,7 +20,12 @@ from stage2 import SyntaxParsedRecipe
 
 pk = form.getfirst("recipe")
 
-print "Id:", pk
+print "Id:", pk, "<br/>"
+
+print '<a href="#decl">Goto: Declarations</a><br/>'
+print '<a href="#instr">Goto: Instructions</a>'
+
+print "<h1 id='decl'>Declarations</h1>"
 
 spr = SyntaxParsedRecipe.objects(id=pk)[0]
 
@@ -40,6 +45,7 @@ for i in spr.ingredients:
 		print etree.tostring(i.tree.html)
 		print "</div>"
 		print etree.tostring(ifc.interpretDeclaration(i.tree.children, i.position).html)
+print "<h1 id='instr'>Instructions</h1>"
 for s in spr.sentences:
 	instructs = s.tree.children['Instruct']
 	print
