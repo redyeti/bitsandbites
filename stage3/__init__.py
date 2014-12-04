@@ -1,5 +1,8 @@
 #-*- coding: utf8 -*-
 import db
+import traceback
+
+GREEDY = True
 
 #from pprint import pprint
 
@@ -47,6 +50,7 @@ class InstructionError(RuntimeError):
 	def __init__(self, msg, context):
 		RuntimeError.__init__(self, msg)
 		self.__context = context
+		traceback.print_exc()
 		
 	@property
 	def context(self):
@@ -237,6 +241,16 @@ class RasmInstruction(db.Document):
 		"indexes" : ['words'],
 	}
 
+	def foreach(self, re, entities):
+		for ent in entities:
+			if ent in IGNORE_LIST:
+				continue #FIXME: handle this intelligently!
+			try:
+				for ing in re.pointers[ent]:
+					yield ent, ing
+			except KeyError:
+				if not GREEDY: raise
+
 
 class RasmInstance(object):
 	def __init__(self, name, words, **params):
@@ -355,11 +369,8 @@ class Inplace(RasmInstruction):
 		if not entities:
 			entities = ["_"]
 		yield entities
-		for ent in entities:
-			if ent in IGNORE_LIST:
-				continue #FIXME: handle this intelligently!
-			for ing in re.pointers[ent]:
-				ing["+"+self.name.lower()] = {}
+		for ent, ing in self.foreach(re, entities):
+			ing["+"+self.name.lower()] = {}
 		yield entities + ["_"]
 
 @RasmInstance("GREASE", ["grease"])
@@ -368,11 +379,8 @@ class TInplace(RasmInstruction):
 		entities = [x['!Unit'].text for x in l['Entity']]
 		yield entities
 		yield entities
-		for ent in entities:
-			if ent in IGNORE_LIST:
-				continue #FIXME: handle this intelligently!
-			for ing in re.pointers[ent]:
-				ing["+"+self.name.lower()] = {}
+		for ent, ing in self.foreach(re, entities):
+			ing["+"+self.name.lower()] = {}
 		yield entities
 
 #FIXME: mix should be "+mix"!
@@ -388,34 +396,11 @@ class Add(RasmInstruction):
 		yield []
 		entities = [x['!Unit'].text for x in l['Entity']]
 		yield entities
-		for ent in entities:
-			if ent in IGNORE_LIST:
-				continue #FIXME: handle this intelligently!
-			for ing in re.pointers[ent]:
-				ing["+combine"] = {}
-				re.pointers[ptr].add(ing)
+		for ent, ing in self.foreach(re, entities):
+			ing["+combine"] = {}
+			re.pointers[ptr].add(ing)
 		yield {ptr, "_"} #FIXME: also yield entities here?
 		
-@RasmInstance("COMBINE", ["combine"])
-class COMBINE(RasmInstruction):
-	def run(self, re, l, s):
-		#if s:
-		#	raise Exception("NYE.")
-		#else:
-		#	ptr = "_"
-		entities = [x['!Unit'].text for x in l['Entity']]
-		ptr = "_"
-		re.pointers[ptr] = set()
-		yield []
-		yield entities
-		for ent in entities:
-			if ent in IGNORE_LIST:
-				continue #FIXME: handle this intelligently!
-			for ing in re.pointers[ent]:
-				ing["+combine"] = {}
-				re.pointers[ptr].add(ing)
-		yield {ptr, "_"} #FIXME: also yield entities here?
-
 class InstructionFactory(object):
 	def __init__(self):
 		self.__re = RuntimeEnvironment()
@@ -471,8 +456,11 @@ class InstructionFactory(object):
 			for p in inPointers:
 				if p in IGNORE_LIST:
 					continue #FIXME: handle this intelligently!
-				for ing in self.__re.pointers[p]:
-					inData.add(ing)
+				try:
+					for ing in self.__re.pointers[p]:
+						inData.add(ing)
+				except KeyError:
+					if not GREEDY: raise
 			inData = [x.toDbObject() for x in inData]
 
 			outPointers = list(r.next())
@@ -486,8 +474,11 @@ class InstructionFactory(object):
 			for p in outPointers:
 				if p in IGNORE_LIST:
 					continue #FIXME: handle this intelligently!
-				for ing in self.__re.pointers[p]:
-					outData.add(ing)
+				try:
+					for ing in self.__re.pointers[p]:
+						outData.add(ing)
+				except KeyError:
+					if not GREEDY: raise
 			outData = [x.toDbObject() for x in outData]
 			for d in outData:
 				for k,v in d.iteritems():
