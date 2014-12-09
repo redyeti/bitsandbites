@@ -46,7 +46,7 @@ if "3" in args:
 	from collections import defaultdict
 	from stage3 import InstructionFactory
 	from stage3 import InstructionError
-	from stage3 import RuleSample
+	from stage3 import RuleSample, RasmInstruction
 
 	RuleSample.objects.delete()	
 

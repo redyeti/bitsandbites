@@ -2,6 +2,10 @@ import db
 from stage4 import Rule
 from random import random, seed
 import time
+import numpy as np
+
+P = 0.05
+
 seed(time.time())
 
 def shuf(*args, **params):
@@ -12,57 +16,173 @@ def shuf(*args, **params):
 def getrand(*args, **params):
 	return shuf(*args, **params)[0]
 
-class RecipeTreeNode(object):
-	def __init__(self, depth, **params):
-		self.__rule = getrand(direction="in-fwd", **params)
-		self.__children = []
+
+import abc
+class RecipeNodeBase(object):
+	__metaclass__ = abc.ABCMeta
+
+	def __init__(self, depth, parent=None):
+		self.children = []
 		self.__depth = depth
-		self.__satisfied = set()
+		self.__parent = parent
+		self._satisfied = set()
+
+	@property
+	def parent(self):
+		return self.__parent
 
 	@property
 	def depth(self):
 		return self.__depth
 
-	@property
-	def index(self):
-		return self.__rule.index
-
 	def getDescendants(self):
-		return reduce(lambda a,b: a+b, [x.getDescendants() for x in self.__children], []) + self.__children
+		return reduce(lambda a,b: a+b, [x.getDescendants() for x in self.children], []) + self.children
 
 	def getDescendantsAndSelf(self):
 		return self.getDescendants()+[self]
 
 	def addChild(self, node):
-		self.__children.append(node)
+		self.children.append(node)
 
-	@property
-	def openRules(self):
-		s = [x.__satisfied for x in self.getDescendantsAndSelf()]
-		s = reduce(lambda a,b:a.union(b), s, set())
-		return set(self.__rule.data).difference(s)
+	openRules = abc.abstractproperty()
+	rules = abc.abstractproperty()
+	name = abc.abstractproperty()
+
+	@abc.abstractmethod
+	def toText(self):
+		pass
 
 	def satisfy(self):
 		# first satisfy operations
 		operations = [x[1:].upper() for x in self.openRules if x.startswith("+")]
-		operations = [(x,Rule.objects(action=x).average("index")) for x in operations]
-		print "Ops:", operations
+		malus = lambda x: -10 if x == self.name else 0
+		operations = [(x,Rule.objects(action=x).average("index")+malus(x)) for x in operations]
+
 		for op, index in sorted(operations, key=lambda x: -x[1]):
-			print "Op:", op
-			self.addChild(RecipeTreeNode(action=op, depth=self.depth+1))
-			self.__satisfied.add("+"+op.lower())
+			try:
+				self.addChild(RecipeTreeNode(action=op, parent=self, depth=self.depth+1))
+			except IndexError:
+				self.addChild(TrivialNode(parent=self, depth=self.depth+1, req=self.openRules))
+			self._satisfied.add("+"+op.lower())
 			return True
 		return False
 
+	def _mk(self, l):
+		def _m():
+			for i, x in enumerate(l):
+				if i == 0:
+					pass
+				elif i == len(l) - 1:
+					yield " and "
+				else:
+					yield ", "
+				yield x
+		return "".join(_m())
+
+
+
+class TrivialNode(RecipeNodeBase):
+	def __init__(self, depth, parent, req):
+		RecipeNodeBase.__init__(self, depth, parent)
+		self.__req = req
+
 	def __str__(self):
-		return "%s<%.2f>(%s)" % (self.__rule.action, self.index, ", ".join(str(x) for x in self.__children))
+		return "%3i: TRIVIAL%s\n" % (self.depth, tuple(self.__req))
+
+	def toText(self):
+		op = set()
+		ig = set()
+		for x in self.__req:
+			if x.startswith("+"):
+				op.add(x[1:]+"ed") 
+			else:
+				ig.add(x)
+		if ig:
+			return ["Take "+self._mk(op) + " " + self._mk(ig)]
+		else:
+			return []
+
+
+	@property
+	def name(self):
+		return "triv"
+
+	@property
+	def openRules(self):
+		return set()
+
+	@property
+	def rules(self):
+		return self.__req
+
+class RecipeTreeNode(RecipeNodeBase):
+	def __init__(self, depth, parent=None, **params):
+		self.__rule = getrand(direction="in-fwd", **params)
+		RecipeNodeBase.__init__(self, depth, parent)
+
+	@property
+	def index(self):
+		return self.__rule.index
+
+	@property
+	def name(self):
+		return self.__rule.action
+
+	@property
+	def rules(self):
+		return self.__rule.data + ["+"+self.name.lower()]
+
+	def toText(self):
+		t = []
+		for x in self.children:
+			t.extend(x.toText())
+
+		j = k = ""
+		if self.openRules and self.children:
+			j = "Add %s and " % self._mk(self.openRules)
+		elif self.openRules:
+			k = " %s " % self._mk(self.openRules)
+		t.append(j+self.name.lower()+k)
+		return t
+
+	def delete(self, n=0):
+		if n == 0:
+			if isinstance(self.parent, RecipeTreeRoot):
+				self.parent.init()
+			else:
+				self.parent.children.remove(self)
+			return True
+		else:
+			if isinstance(self.parent, RecipeTreeRoot):
+				return False
+			else:
+				return self.parent.delete(n-1)
+
+	def __str__(self):
+		return "%3i: %s<%.2f>%s\n%s" % (
+			self.depth,
+			self.__rule.action, self.index,
+			tuple(self.openRules),
+			"".join(("\t"*(self.depth+1))+str(x) for x in self.children),
+		)
 
 	def __repr__(self):
 		return "<%s %.2f %s>" % (self.__rule.action, self.index, self.openRules)
 
+	@property
+	def openRules(self):
+		childsat = [x.rules for x in self.getDescendants()]
+		childsat = reduce(lambda a,b:a.union(b), childsat, set())
+
+		return set(self.__rule.data).difference(childsat)
+
+
 class RecipeTreeRoot(object):
 	def __init__(self):
-		self.__root = RecipeTreeNode(action="FINALIZE", depth=0)
+		self.init()
+
+	def init(self):
+		self.__root = RecipeTreeNode(action="FINALIZE", parent=self, depth=0)
 
 	def getAllNodes(self):
 		return self.__root.getDescendantsAndSelf()
@@ -70,8 +190,22 @@ class RecipeTreeRoot(object):
 	def getUnsatisfiedNodes(self):
 		return [x for x in self.getAllNodes() if x.openRules]
 
-	def getActiveNode(self):
-		return max(self.getUnsatisfiedNodes(), key=lambda x: x.depth - x.index)
+	def getActiveNodes(self):
+		return sorted(self.getUnsatisfiedNodes(), key=lambda x: x.index - x.depth)
+
+	@property
+	def name(self):
+		return "(root)"
+
+	def satisfy(self):
+		p = np.random.geometric(P)
+		for n in self.getActiveNodes():
+			if n.delete(p-1):
+				return True
+		for n in self.getActiveNodes():
+			if n.satisfy():
+				return True
+		return False
 
 	def __getattr__(self, a):
 		return getattr(self.__root, a)
@@ -83,17 +217,23 @@ class RecipeTreeRoot(object):
 	def __str__(self):
 		return str(self.__root)
 
-rtr = RecipeTreeRoot()
-print "All:", rtr.getAllNodes()
+	def toText(self):
+		return "\n".join([("%2i. "%i)+x for (i,x) in enumerate(self.root.toText()[:-1])])
 
-ok = True
-while ok:
-	print "--"
-	print "Act:", rtr.getActiveNode()
-	ok = rtr.getActiveNode().satisfy()
-	print "Sat:", ok
-	print "All:", rtr.getAllNodes()
+if __name__ == "__main__":
+	rtr = RecipeTreeRoot()
+	#print "All:", rtr.getAllNodes()
+
+	ok = True
+	while ok:
+		#print "--"
+		#print "Act:", rtr.getActiveNodes()
+		ok = rtr.satisfy()
+		#print "Sat:", ok
+		#print "All:", rtr.getAllNodes()
 	print rtr
+	print "---"
+	print rtr.toText()
 
 ## pick a root node
 #root = shuf(action="FINALIZE", direction="in-fwd")[0]

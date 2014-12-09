@@ -251,6 +251,7 @@ class RasmInstruction(db.Document):
 			except KeyError:
 				if not GREEDY: raise
 
+RasmInstruction.objects.delete()	
 
 class RasmInstance(object):
 	def __init__(self, name, words, **params):
@@ -384,7 +385,7 @@ class TInplace(RasmInstruction):
 		yield entities
 
 #FIXME: mix should be "+mix"!
-@RasmInstance("ADD", ["add", "mix in", "stir in","beat in", "pour in", "combine"])
+@RasmInstance("COMBINE", ["add", "mix in", "stir in","beat in", "pour in", "combine"])
 @RasmInstance("SPRINKLE", ["sprinkle"])
 class Add(RasmInstruction):
 	def run(self, re, l, s):
@@ -397,7 +398,7 @@ class Add(RasmInstruction):
 		entities = [x['!Unit'].text for x in l['Entity']]
 		yield entities + ["_"]
 		for ent, ing in self.foreach(re, entities):
-			ing["+combine"] = {}
+			ing["+"+self.name.lower()] = {}
 			re.pointers[ptr].add(ing)
 		yield entities + ["_"]
 		

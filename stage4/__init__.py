@@ -110,8 +110,8 @@ def discover(q, t):
 					yield x
 					ismax = False
 
-	#if ismax:
-	yield q, freq, index
+	if ismax:
+		yield q, freq, index
 		
 
 import db
