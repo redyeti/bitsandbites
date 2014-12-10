@@ -1,3 +1,4 @@
+from __future__ import division
 import db
 from stage4 import Rule
 from random import random, seed
@@ -87,8 +88,10 @@ class TrivialNode(RecipeNodeBase):
 		self.__req = req
 
 	def __str__(self):
-		return "%3i: TRIVIAL%s\n" % (self.depth, tuple(self.__req))
+		return "%3i: TRIVIAL{%.2f}%s\n" % (self.depth, self.score, tuple(self.__req))
 
+	score = -0.1
+	
 	def toText(self):
 		op = set()
 		ig = set()
@@ -129,6 +132,21 @@ class RecipeTreeNode(RecipeNodeBase):
 		return self.__rule.action
 
 	@property
+	def score(self):
+		bwd_rules = Rule.objects(direction="in-bwd", action=self.__rule.action)
+		childsat = self.__childsat()
+		score = 0
+		for rule in bwd_rules:
+			if set(self.__rule.data).difference(childsat):
+				score += 1
+			else:
+				score -= 1
+		if bwd_rules:
+			return score / len(bwd_rules)
+		else:
+			return 0
+
+	@property
 	def rules(self):
 		return self.__rule.data + ["+"+self.name.lower()]
 
@@ -159,9 +177,10 @@ class RecipeTreeNode(RecipeNodeBase):
 				return self.parent.delete(n-1)
 
 	def __str__(self):
-		return "%3i: %s<%.2f>%s\n%s" % (
+		return "%3i: %s<%.2f>{%.2f}%s\n%s" % (
 			self.depth,
 			self.__rule.action, self.index,
+			self.score,
 			tuple(self.openRules),
 			"".join(("\t"*(self.depth+1))+str(x) for x in self.children),
 		)
@@ -169,11 +188,15 @@ class RecipeTreeNode(RecipeNodeBase):
 	def __repr__(self):
 		return "<%s %.2f %s>" % (self.__rule.action, self.index, self.openRules)
 
-	@property
-	def openRules(self):
+	def __childsat(self):
 		childsat = [x.rules for x in self.getDescendants()]
 		childsat = reduce(lambda a,b:a.union(b), childsat, set())
+		return childsat
+		
 
+	@property
+	def openRules(self):
+		childsat = self.__childsat()
 		return set(self.__rule.data).difference(childsat)
 
 
@@ -220,6 +243,11 @@ class RecipeTreeRoot(object):
 	def toText(self):
 		return "\n".join([("%2i. "%i)+x for (i,x) in enumerate(self.root.toText()[:-1])])
 
+	@property
+	def score(self):
+		n = self.getAllNodes()
+		return sum([x.score for x in n]) / len(n)
+
 if __name__ == "__main__":
 	rtr = RecipeTreeRoot()
 	#print "All:", rtr.getAllNodes()
@@ -234,6 +262,9 @@ if __name__ == "__main__":
 	print rtr
 	print "---"
 	print rtr.toText()
+	print "---"
+	print rtr.score
+	print "==="
 
 ## pick a root node
 #root = shuf(action="FINALIZE", direction="in-fwd")[0]
