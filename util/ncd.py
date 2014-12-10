@@ -1,8 +1,8 @@
 from __future__ import division
-import zlib
+import bz2
 
 def z(x):
-	return len(zlib.compress(x))
+	return len(bz2.compress(x,9))
 
 def ncd(x, y, compressed=None):
 		
@@ -12,6 +12,20 @@ def ncd(x, y, compressed=None):
 	else:
 		zy = compressed
 
-	return (min(z(x+"\033"+y), z(y+"\033"+x)) - min(zx, zy)) / max(zx, zy)
+	n = min(z(x+"\000"+y), z(y+"\000"+x)) - min(zx, zy) - 1
+	d = max(zx, zy) - z("")
+
+	if d == 0:
+		return 0
+
+	return n / d
 
 __all__ = ["ncd"]
+
+if __name__ == "__main__":
+	print ncd("","")
+	print "----"
+	print ncd("potato eggs","potato eggs")
+	print "----"
+	print ncd("potato eggs","ham zucchini")
+
