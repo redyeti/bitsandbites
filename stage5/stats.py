@@ -33,7 +33,7 @@ class Stat(object):
 	@FProperty
 	def vrs(self):
 		"""Violated rules score"""
-		return self.__rtr.score
+		return self.__rtr.vioScore
 
 	@FProperty
 	def rep(self):
@@ -49,9 +49,10 @@ class Stat(object):
 	def ihs(self):
 		"""Ingredience histogram score"""
 
-	@XProperty
+	@FProperty
 	def ixs(self):
 		"""Index score"""
+		return self.__rtr.idxScore
 
 	@property
 	def __all(self):
@@ -92,7 +93,7 @@ class Stat(object):
 			s.append(("%*s: %*s = "+clattr.FMT) % (l2, clattr.__doc__, l1, pname, inattr))
 			if clattr.ADD:
 				z += inattr
-		s.append(("%*s: %*s = "+clattr.FMT) % (l2, "TOTAL SCORE", l1, u"Σ", z))
+		s.append(("%*s: %*s = % .2f") % (l2, "TOTAL SCORE", l1, u"Σ", z))
 		return "\n".join(s)
 
 

@@ -88,9 +88,10 @@ class TrivialNode(RecipeNodeBase):
 		self.__req = req
 
 	def __str__(self):
-		return "%3i: TRIVIAL{%.2f}%s\n" % (self.depth, self.score, tuple(self.__req))
+		return "%3i: TRIVIAL%s\n" % (self.depth, tuple(self.__req))
 
-	score = -0.1
+	vioScore = -0.1
+	idxScore = 0
 	
 	def toText(self):
 		op = set()
@@ -132,7 +133,7 @@ class RecipeTreeNode(RecipeNodeBase):
 		return self.__rule.action
 
 	@property
-	def score(self):
+	def vioScore(self):
 		bwd_rules = Rule.objects(direction="in-bwd", action=self.__rule.action)
 		childsat = self.__childsat()
 		score = 0
@@ -145,6 +146,13 @@ class RecipeTreeNode(RecipeNodeBase):
 			return score / len(bwd_rules)
 		else:
 			return 0
+
+	@property
+	def idxScore(self):
+		req = self.__rule.index
+		mdp = max([x.depth for x in self.getDescendants()])
+
+		return 1 - abs(req - (mdp - self.depth))
 
 	@property
 	def rules(self):
@@ -177,10 +185,9 @@ class RecipeTreeNode(RecipeNodeBase):
 				return self.parent.delete(n-1)
 
 	def __str__(self):
-		return "%3i: %s<%.2f>{%.2f}%s\n%s" % (
+		return "%3i: %s<%.2f>%s\n%s" % (
 			self.depth,
 			self.__rule.action, self.index,
-			self.score,
 			tuple(self.openRules),
 			"".join(("\t"*(self.depth+1))+str(x) for x in self.children),
 		)
@@ -244,6 +251,11 @@ class RecipeTreeRoot(object):
 		return "\n".join([("%2i. "%i)+x for (i,x) in enumerate(self.root.toText()[:-1])])
 
 	@property
-	def score(self):
+	def vioScore(self):
 		n = self.getAllNodes()
-		return sum([x.score for x in n]) / len(n)
+		return sum([x.vioScore for x in n]) / len(n)
+
+	@property
+	def idxScore(self):
+		n = self.getAllNodes()
+		return sum([x.idxScore for x in n]) / len(n)

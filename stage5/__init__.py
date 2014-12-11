@@ -7,7 +7,7 @@ if __name__ == "__main__":
 	sys.setdefaultencoding("utf8")
 
 	mrtr = None
-	for i in xrange(1):
+	for i in xrange(20):
 		rtr = RecipeTreeRoot()
 		#print "All:", rtr.getAllNodes()
 
