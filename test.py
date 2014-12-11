@@ -1,4 +1,4 @@
-import sys
+import sys, bz2
 reload(sys)
 sys.setdefaultencoding("utf8")
 
@@ -17,8 +17,9 @@ if "1" in args:
 
 if "2" in args:
 	from stage2.layoutparse import Layoutparser
-	from stage2 import lang, mktree, SyntaxParsedRecipe, Block
+	from stage2 import lang, mktree, SyntaxParsedRecipe, Block, RecipeMeta
 	SyntaxParsedRecipe.objects.delete()
+	RecipeMeta.objects.delete()
 
 	for doc, d in Layoutparser.parseDB(ignore_errors=True):
 		print "origin:", doc.uid
@@ -36,6 +37,10 @@ if "2" in args:
 				s = Block(tree=m, position=(i,j))
 				spr.sentences.append(s)
 		spr.save()
+
+		textblob = reduce(lambda a,b:a+b, d['Procedure'], [])
+		textblob = "".join(textblob)
+		RecipeMeta(spr=spr, sblob=textblob).save()
 
 # -- stage 3 --
 

@@ -59,7 +59,7 @@ class Q(object):
 # find operations
 
 #MINFREQ = 0.001
-MINFREQ = 0.005
+MINFREQ = 0.002
 MINCONF_FWD = 0.000023
 MINCONF_BWD = 0.000023
 MINQ_FWD = 0.000001

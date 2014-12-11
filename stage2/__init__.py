@@ -10,6 +10,10 @@ class SyntaxParsedRecipe(db.Document):
 	ingredients = db.ListField()
 	sentences = db.ListField()
 
+class RecipeMeta(db.Document):
+	spr = db.ReferenceField('SyntaxParsedRecipe', reverse_delete_rule=db.CASCADE, required=True)
+	sblob = db.StringField()
+
 if __name__ == "__main__":
 	import sys
 	reload(sys)

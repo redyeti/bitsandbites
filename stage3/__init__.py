@@ -104,6 +104,8 @@ class Remap(object):
 @Remap("bread crumbs", "breadcrumbs")
 @Remap("vanilla extract", "vanilla essence")
 @Remap("cake meal", "meal")
+@Remap("cake meal", "meal")
+@Remap("cake flour", "flour")
 class Lookup(MutableMapping):
 	remap = {
 	}
