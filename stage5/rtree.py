@@ -36,6 +36,10 @@ class RecipeNodeBase(object):
 	def depth(self):
 		return self.__depth
 
+	@property
+	def ingredients(self):
+		return set(x for x in self.props if not x.startswith("+"))
+
 	def getDescendants(self):
 		return reduce(lambda a,b: a+b, [x.getDescendants() for x in self.children], []) + self.children
 
@@ -68,6 +72,16 @@ class RecipeNodeBase(object):
 			return True
 		return False
 
+	def _mk2(self, req):
+		op = set()
+		ig = set()
+		for x in req:
+			if x.startswith("+"):
+				op.add(x[1:]+"ed") 
+			else:
+				ig.add(x)
+		return bool(ig), self._mk(op) + " " + self._mk(ig)
+
 	def _mk(self, l):
 		def _m():
 			for i, x in enumerate(l):
@@ -80,6 +94,23 @@ class RecipeNodeBase(object):
 				yield x
 		return "".join(_m())
 
+	def delete(self, n=0):
+		if n == 0:
+			if isinstance(self.parent, RecipeTreeRoot):
+				self.parent.init()
+			else:
+				try:
+					self.parent.children.remove(self)
+				except ValueError:
+					pass #!sic
+			return True
+		else:
+			if isinstance(self.parent, RecipeTreeRoot):
+				return False
+			else:
+				return self.parent.delete(n-1)
+
+
 
 
 class TrivialNode(RecipeNodeBase):
@@ -87,22 +118,22 @@ class TrivialNode(RecipeNodeBase):
 		RecipeNodeBase.__init__(self, depth, parent)
 		self.__req = req
 
-	def __str__(self):
-		return "%3i: TRIVIAL%s\n" % (self.depth, tuple(self.__req))
+	def __str__(self, n=None):
+		return "%3i: TRIVIAL%s\n" % (n or self.depth, tuple(self.__req))
 
 	vioScore = -0.1
 	idxScore = 0
+	index = float("Inf")
+
+	@property
+	def props(self):
+		return set(self.__req)
 	
 	def toText(self):
-		op = set()
-		ig = set()
-		for x in self.__req:
-			if x.startswith("+"):
-				op.add(x[1:]+"ed") 
-			else:
-				ig.add(x)
-		if ig:
-			return ["Take "+self._mk(op) + " " + self._mk(ig)]
+		a, s = self._mk2(self.__req)
+		if a:
+			z = "Take"
+			return [z+" "+ s]
 		else:
 			return []
 
@@ -125,12 +156,23 @@ class RecipeTreeNode(RecipeNodeBase):
 		RecipeNodeBase.__init__(self, depth, parent)
 
 	@property
+	def props(self):
+		s = set()
+		for c in self.children:
+			s.update(c.props)
+		return s
+
+	@property
 	def index(self):
 		return self.__rule.index
 
 	@property
 	def name(self):
 		return self.__rule.action
+
+	@property
+	def orderedChildren(self):
+		return sorted(self.children, key=lambda x:x.index)
 
 	@property
 	def vioScore(self):
@@ -150,9 +192,26 @@ class RecipeTreeNode(RecipeNodeBase):
 	@property
 	def idxScore(self):
 		req = self.__rule.index
-		mdp = max([x.depth for x in self.getDescendants()])
+		try:
+			mdp = max([x.depth for x in self.getDescendants()])
+			return 1 - abs(req - (mdp - self.depth))
+		except ValueError:
+			return 0
 
-		return 1 - abs(req - (mdp - self.depth))
+	def prune(self):
+		r = set()
+		for child in self.orderedChildren:
+			if set(child.rules).issubset(r):
+				child.delete()
+	
+			if isinstance(child, TrivialNode):
+				cs = child.rules
+			else:
+				cs = child.__childsat().union(child.rules)
+			r.update(cs)
+
+			
+			
 
 	@property
 	def rules(self):
@@ -160,36 +219,24 @@ class RecipeTreeNode(RecipeNodeBase):
 
 	def toText(self):
 		t = []
-		for x in self.children:
+		for x in self.orderedChildren:
 			t.extend(x.toText())
 
 		j = k = ""
-		if self.openRules and self.children:
-			j = "Add %s and " % self._mk(self.openRules)
-		elif self.openRules:
-			k = " %s " % self._mk(self.openRules)
+		a, s = self._mk2(self.openRules)
+		if a and self.children:
+			j = "Add %s and " % s
+		elif a:
+			k = " %s " % s
 		t.append(j+self.name.lower()+k)
 		return t
 
-	def delete(self, n=0):
-		if n == 0:
-			if isinstance(self.parent, RecipeTreeRoot):
-				self.parent.init()
-			else:
-				self.parent.children.remove(self)
-			return True
-		else:
-			if isinstance(self.parent, RecipeTreeRoot):
-				return False
-			else:
-				return self.parent.delete(n-1)
-
-	def __str__(self):
+	def __str__(self, n=None):
 		return "%3i: %s<%.2f>%s\n%s" % (
-			self.depth,
+			n or self.depth,
 			self.__rule.action, self.index,
 			tuple(self.openRules),
-			"".join(("\t"*(self.depth+1))+str(x) for x in self.children),
+			"".join(("\t"*(self.depth+1))+x.__str__(n) for x in self.orderedChildren),
 		)
 
 	def __repr__(self):
@@ -226,6 +273,16 @@ class RecipeTreeRoot(object):
 	@property
 	def name(self):
 		return "(root)"
+
+	def prune(self):
+		self.__root.prune()
+		c = sorted(self.getAllNodes(), key=lambda x:x.depth)
+		for i in c:
+			for j in c:
+				if i.__str__(1) == j.__str__(1) and i is not j:
+					if i.depth < j.depth:
+						j.delete()
+		return self.getAllNodes()
 
 	def satisfy(self):
 		p = np.random.geometric(P)

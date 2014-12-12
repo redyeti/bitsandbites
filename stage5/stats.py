@@ -1,6 +1,7 @@
 #-*- coding: utf8 -*-
 from __future__ import division
 from stage2 import RecipeMeta
+from stage3 import RuleSample
 from util.ncd import ncd
 import bz2
 
@@ -36,18 +37,35 @@ class Stat(object):
 		return self.__rtr.vioScore
 
 	@FProperty
-	def rep(self):
-		"""Repetition score"""
-		text = self.__rtr.toText()
-		return len(bz2.compress(text)) / len(text)
+	def mdg(self):
+		"""Manual downgrade"""
+		mdg = 0
+		ing = self.__rtr.ingredients
 
-	@XProperty
+		if not [x for x in ing if "flour" in x]:
+			mdg -= 5
+
+		return mdg
+		
+
+	@FProperty
 	def xis(self):
 		"""Cross ingredience score"""
-
-	@XProperty
-	def ihs(self):
-		"""Ingredience histogram score"""
+		ing = self.__rtr.ingredients
+		c = 0 
+		t = 0
+		for i in ing:
+			for j in ing:
+				l = RuleSample.objects(__raw__ = {
+					'$and': [
+						{'inData': {'$elemMatch': { i: {'$exists': True }}}},
+						{'inData': {'$elemMatch': { j: {'$exists': True }}}}
+					]
+				})
+				if l:
+					c += 1
+				t += 1
+		return (c + 1) / (t + 1)
 
 	@FProperty
 	def ixs(self):
