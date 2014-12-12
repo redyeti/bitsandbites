@@ -1,0 +1,27 @@
+% design
+\setbeamertemplate{footline}[frame number]
+\beamertemplatenavigationsymbolsempty
+
+% ... a mix of Dresden and Frankfurt
+%\usetheme{Frankfurt}
+%\usetheme{Dresden}
+
+\mode<presentation>
+
+% either use ...
+\useoutertheme[subsection=false]{smoothbars}
+% ... or ...
+%\useoutertheme{default}
+
+\useinnertheme{default}
+\usecolortheme{dove}
+\usecolortheme{beaver}
+\setbeamerfont{block title}{size={}}
+\mode<all>
+
+\newcommand<>{\onlybox}[2]{
+	\vbox to #1 {\vfil
+		\only#3{#2}
+		\vfil
+	}
+}

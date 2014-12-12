@@ -1,0 +1,15 @@
+*.aux
+*.bbl
+*.blg
+*.log
+*.out
+*.pdf
+*.tex.backup
+*.toc
+*.nav
+*.snm
+!template
+
+sources/files/*/*
+!sources/files/*/*.pdf
+!sources/files/*/*.PDF
