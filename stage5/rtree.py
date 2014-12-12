@@ -58,6 +58,11 @@ class RecipeNodeBase(object):
 		pass
 
 	def satisfy(self):
+		p = np.random.geometric(P)
+		if p < self.depth and [x for x in self.openRules if not x.startswith("+")]:
+			self.setRules([x for x in self.rules if not x.startswith("+")])
+			return 
+
 		# first satisfy operations
 		operations = [x[1:].upper() for x in self.openRules if x.startswith("+")]
 		malus = lambda x: -10 if x == self.name else 0
@@ -150,6 +155,9 @@ class TrivialNode(RecipeNodeBase):
 	def rules(self):
 		return self.__req
 
+	def setRules(self, r):
+		self.__req = set(r)
+
 class RecipeTreeNode(RecipeNodeBase):
 	def __init__(self, depth, parent=None, **params):
 		self.__rule = getrand(direction="in-fwd", **params)
@@ -216,6 +224,9 @@ class RecipeTreeNode(RecipeNodeBase):
 	@property
 	def rules(self):
 		return self.__rule.data + ["+"+self.name.lower()]
+
+	def setRules(self, r):
+		self.__rule.data = list(r)
 
 	def toText(self):
 		t = []
